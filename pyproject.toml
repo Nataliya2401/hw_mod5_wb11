@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "hw-mod5-wb11"
+version = "0.1.0"
+description = ""
+authors = ["Nataliya2401 <sabotab2000@gmail.com>"]
+readme = "README.md"
+packages = [{include = "hw_mod5_wb11"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+websockets = "^11.0.3"
+aiohttp = "^3.8.4"
+names = "^0.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
