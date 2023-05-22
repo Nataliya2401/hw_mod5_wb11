@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime, timedelta
 import json
 import logging
 import platform
@@ -7,62 +6,10 @@ import sys
 
 import aiohttp
 
-CURRENCY = ('EUR', 'USD')
-LIST_OF_CURRENCIES = {
-    'USD',
-    'EUR',
-    'CHF',
-    'GBP',
-    'PLN',
-    'SEK',
-    'XAU',
-    'CAD',
+from utl import create_list_url, get_currencies, get_days_from_request, selection_fields
 
 
-
-}
-
-URL_PB = 'https://api.privatbank.ua/p24api/exchange_rates?json&date='
 logging.basicConfig(level=logging.INFO)
-
-
-def create_list_url(days: int) -> list[str]:
-    curr_d = datetime.today()
-    urls = [URL_PB + (datetime.strftime(curr_d - timedelta(days=day), '%d.%m.%Y')) for day in range(days)]
-    return urls
-
-
-def get_currencies(argv):
-    currencies = ['EUR', 'USD']
-    if len(argv) > 2:
-        for el in argv[2:]:
-            if el.upper() in LIST_OF_CURRENCIES:
-                currencies.append(el.upper())
-    return set(currencies)
-
-
-def get_days_from_request(arg) -> int:
-    try:
-        days = int(arg[1]) if len(arg) > 1 else 1
-    except ValueError:
-        days = 1
-        logging.info('Incorrect number of days. Results will be done for 1 day.')
-    if days <= 0:
-        days = 1
-        logging.info('Incorrect number of days. Results will be done for 1 day.')
-    if days > 10:
-        days = 10
-        logging.info('Incorrect number of days. Results will be done for 10 days.')
-    return days
-
-
-def selection_fields(response, currencies=('EUR', 'USD')):
-    total_rates = response['exchangeRate']
-    rates = {rate.get("currency"): {'sale': rate.get('saleRate', 'saleRateNB'),
-                                    'purchase': rate.get('purchaseRate', 'purchaseRateNB')}
-             for rate in total_rates if rate.get("currency", '') in currencies
-             }
-    return rates
 
 
 async def request(url, currencies):

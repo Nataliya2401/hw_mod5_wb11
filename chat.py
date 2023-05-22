@@ -7,9 +7,19 @@ import names
 from websockets import WebSocketServerProtocol
 from websockets.exceptions import ConnectionClosedOK
 
+from constants import CURRENCY
+from utl import create_list_url, selection_fields
+from main import get_exchange
+
 logging.basicConfig(level=logging.INFO)
 
-url_pb = 'https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5'
+
+async def get_exchange(days: int) -> str:
+    urls = create_list_url(days)
+    list_requests = [request(url) for url in urls]
+    res = await asyncio.gather(*list_requests, return_exceptions=True)
+    print(res)
+    return str(res)
 
 
 async def request(url):
@@ -18,16 +28,11 @@ async def request(url):
             async with session.get(url) as resp:
                 if resp.status == 200:
                     r = await resp.json()
-                    return r
+                    return {r['date']: selection_fields(r, CURRENCY)}
                 logging.error(f'Error status {resp.status} for {url}')
         except aiohttp.ClientConnectionError as e:
             logging.error(f'Connection Error for {url}: {e}')
         return None
-
-
-async def get_exchange():
-    res = await request(url_pb)
-    return res
 
 
 class Server:
@@ -57,7 +62,16 @@ class Server:
 
     async def distribute(self, ws: WebSocketServerProtocol):
         async for message in ws:
-             await self.send_to_clients(f"{ws.name}: {message}")
+            if 'exchange' in message:
+                try:
+                    day_message = int(message.split()[1])
+                except ValueError:
+                    day_message = 1
+                print(day_message)
+                message = await get_exchange(day_message)
+                await self.send_to_clients(message)
+            else:
+                await self.send_to_clients(f"{ws.name}: {message}")
 
 
 async def main():
